@@ -1,1 +1,537 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מעבד טקסטים עבריים</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            backdrop-filter: blur(15px);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 0;
+            min-height: 700px;
+        }
+
+        .workspace {
+            padding: 30px;
+            background: white;
+        }
+
+        .control-panel {
+            background: #f8fafc;
+            padding: 25px;
+            border-right: 1px solid #e2e8f0;
+            overflow-y: auto;
+        }
+
+        .input-section, .output-section {
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .text-input, .text-output {
+            width: 100%;
+            height: 250px;
+            padding: 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 15px;
+            font-size: 16px;
+            font-family: 'David Libre', 'Times New Roman', serif;
+            line-height: 1.8;
+            resize: none;
+            transition: all 0.3s ease;
+        }
+
+        .text-input:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .text-output {
+            background: #f9fafb;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+
+        .button-group {
+            margin-bottom: 25px;
+        }
+
+        .group-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .action-button {
+            width: 100%;
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #374151;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-align: right;
+        }
+
+        .action-button:hover {
+            border-color: #4f46e5;
+            color: #4f46e5;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.15);
+        }
+
+        .action-button:active {
+            transform: translateY(0);
+        }
+
+        .action-button.processing {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            border-color: #4f46e5;
+        }
+
+        .action-button.processing .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .status-bar {
+            background: #f1f5f9;
+            padding: 15px 30px;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 14px;
+            color: #64748b;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #10b981;
+        }
+
+        .clear-button {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .clear-button:hover {
+            background: #dc2626;
+        }
+
+        .settings-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .setting-item {
+            margin-bottom: 15px;
+        }
+
+        .setting-item label {
+            display: block;
+            font-size: 12px;
+            font-weight: 500;
+            color: #6b7280;
+            margin-bottom: 5px;
+        }
+
+        .setting-item input, .setting-item select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+
+        .error-message {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #dc2626;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .control-panel {
+                border-right: none;
+                border-top: 1px solid #e2e8f0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>מעבד טקסטים עבריים</h1>
+            <p>כלי מתקדם לעריכה ועיבוד טקסטים בשפה העברית</p>
+        </div>
+
+        <div class="main-content">
+            <div class="workspace">
+                <div class="input-section">
+                    <div class="section-title">
+                        📝 הכנסת טקסט
+                    </div>
+                    <textarea id="textInput" class="text-input" placeholder="הכנס כאן את הטקסט לעיבוד..."></textarea>
+                </div>
+
+                <div class="output-section">
+                    <div class="section-title">
+                        📄 תוצאת העיבוד
+                    </div>
+                    <div id="textOutput" class="text-output">התוצאה תוצג כאן לאחר העיבוד...</div>
+                </div>
+            </div>
+
+            <div class="control-panel">
+                <div class="button-group">
+                    <div class="group-title">🔧 כלי עיבוד בסיסי</div>
+                    
+                    <button class="action-button" onclick="processText('punctuation')" id="btn-punctuation">
+                        ✨ פיסוק מלא
+                        <span>הוספת פסיקים, נקודות ונקודותיים</span>
+                    </button>
+                    
+                    <button class="action-button" onclick="processText('truncate')" id="btn-truncate">
+                        ✂️ קיטוע טקסט
+                        <span>קיצור וסיכום הטקסט</span>
+                    </button>
+                    
+                    <button class="action-button" onclick="processText('nikud')" id="btn-nikud">
+                        📖 הוספת ניקוד
+                        <span>ניקוד מלא לטקסט</span>
+                    </button>
+                    
+                    <button class="action-button" onclick="processText('sources')" id="btn-sources">
+                        📚 מראי מקומות
+                        <span>הוספת מקורות ואסמכתאות</span>
+                    </button>
+                </div>
+
+                <div class="button-group">
+                    <div class="group-title">📝 עריכה ועיצוב</div>
+                    
+                    <button class="action-button" onclick="processText('edit')" id="btn-edit">
+                        ✏️ עריכה כללית
+                        <span>תיקון שגיאות ושיפור הטקסט</span>
+                    </button>
+                    
+                    <button class="action-button" onclick="processText('format')" id="btn-format">
+                        🎨 עיצוב טקסט
+                        <span>הדגשות ועיצוב מתקדם</span>
+                    </button>
+                    
+                    <button class="action-button" onclick="processText('grammar')" id="btn-grammar">
+                        📋 בדיקת דקדוק
+                        <span>תיקון דקדוק וכתיב</span>
+                    </button>
+                </div>
+
+                <div class="button-group">
+                    <div class="group-title">🎯 כלים מתקדמים</div>
+                    
+                    <button class="action-button" onclick="processText('analyze')" id="btn-analyze">
+                        🔍 ניתוח טקסט
+                        <span>ניתוח תוכן ומבנה</span>
+                    </button>
+                    
+                    <button class="action-button" onclick="processText('translate')" id="btn-translate">
+                        🌍 תרגום
+                        <span>תרגום לשפות אחרות</span>
+                    </button>
+                    
+                    <button class="action-button" onclick="processText('custom')" id="btn-custom">
+                        ⚙️ עיבוד מותאם
+                        <span>הוראות מיוחדות</span>
+                    </button>
+                </div>
+
+                <div class="settings-section">
+                    <div class="group-title">⚙️ הגדרות</div>
+                    
+                    <div class="setting-item">
+                        <label for="maxTokens">מקסימום טוקנים:</label>
+                        <input type="number" id="maxTokens" value="2000" min="100" max="4000">
+                    </div>
+                    
+                    <div class="setting-item">
+                        <label for="model">מודל:</label>
+                        <select id="model">
+                            <option value="claude-sonnet-4-20250514">Claude Sonnet 4</option>
+                            <option value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet</option>
+                        </select>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <label for="customPrompt">הוראות נוספות:</label>
+                        <textarea id="customPrompt" rows="3" placeholder="הכנס הוראות מיוחדות..."></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="status-bar">
+            <div class="status-indicator">
+                <div class="status-dot"></div>
+                <span id="statusText">מוכן לעיבוד</span>
+            </div>
+            <div>
+                <button class="clear-button" onclick="clearAll()">נקה הכל</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'https://api.anthropic.com/v1/messages';
+        
+        // הגדרות פרומפט לכל פונקציה
+        const PROMPTS = {
+            punctuation: `פיסוק 3 - פיסוק מלא
+
+עם סימני שאלה וקריאה. הגדרה: כולל פסיקים, נקודות, נקודותיים, מרכאות.
+
+**הערת עצמאות**: בביצוע שלב זה, יטופלו אך ורק ענייני פיסוק. אין לשנות מילים בגוף הטקסט, שום מילה ושום אות. אין לגעת במבנה הקטעים, במראי המקומות או בכותרות הקיימות.
+
+1. סימני פיסוק - כללים ועקרונות:
+- פיסוק כולל: פסיקים, נקודות, ונקודותיים
+- שימוש מינימלי בסימני פיסוק
+- שמירה על סגנון הכתיבה המסורתי
+
+2. שימוש בנקודה:
+- בסוף משפט
+- לאחר ראשי תיבות
+- בסיום רעיון
+- לפני התחלת נושא חדש
+
+3. שימוש בפסיק:
+- בין חלקי משפט
+- ברשימות
+- לפני מילות קישור
+- להפרדה בין רעיונות משניים
+
+4. שימוש בנקודתיים:
+בציטוט של פסוקים
+דוגמא: כמו שנאמר: 'בראשית ברא אלקים'.
+
+5. סימני מרכאות:
+בציטוט פסוקים ומדרשים, השתמש במרכאה אחת.
+לדוגמא: 'ברכות אביך גברו'.
+
+6. סימני שאלה וקריאה:
+- הימנעות כמעט מוחלטת משימוש בסימן קריאה
+- סימן שאלה רק בקושיות מפורשות`,
+            
+            truncate: 'קצר את הטקסט הבא תוך שמירה על הרעיונות המרכזיים. הקפד על בהירות וקיצור:',
+            
+            nikud: 'הוסף ניקוד מלא ומדויק לטקסט העברי הבא. הקפד על דיוק בהברות ובהטעמות:',
+            
+            sources: 'הוסף מראי מקומות ומקורות רלוונטיים לטקסט הבא. כלול פסוקים, גמרא, מדרשים ומקורות רלוונטיים:',
+            
+            edit: 'ערוך את הטקסט הבא לשיפור הבהירות, הדיוק והזרימה. תקן שגיאות ושפר את הניסוח:',
+            
+            format: 'עצב את הטקסט הבא עם הדגשות מתאימות (**), מבנה ברור ועיצוב מקצועי:',
+            
+            grammar: 'בדוק ותקן שגיאות דקדוק, כתיב וניסוח בטקסט הבא:',
+            
+            analyze: 'נתח את הטקסט הבא - תוכן, מבנה, נושאים מרכזיים ומסקנות:',
+            
+            translate: 'תרגם את הטקסט הבא לשפה הנבחרת תוך שמירה על הנקודות ועל הרוח המקורית:',
+            
+            custom: 'עבד את הטקסט על פי ההוראות המיוחדות שסופקו:'
+        };
+
+        let isProcessing = false;
+
+        async function processText(action) {
+            if (isProcessing) return;
+            
+            const inputText = document.getElementById('textInput').value.trim();
+            if (!inputText) {
+                showError('אנא הכנס טקסט לעיבוד');
+                return;
+            }
+
+            isProcessing = true;
+            const button = document.getElementById(`btn-${action}`);
+            const originalContent = button.innerHTML;
+            
+            // עדכון מצב הכפתור
+            button.classList.add('processing');
+            button.innerHTML = `<div class="spinner"></div> מעבד...`;
+            
+            updateStatus('מעבד את הטקסט...');
+
+            try {
+                const customPrompt = document.getElementById('customPrompt').value.trim();
+
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        model: document.getElementById('model').value,
+                        max_tokens: parseInt(document.getElementById('maxTokens').value),
+                        temperature: 0.3,
+                        message: inputText,
+                        action: action,
+                        systemPrompt: action === 'custom' && customPrompt ? customPrompt : null
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error || `שגיאת שרת: ${response.status}`);
+                }
+
+                const data = await response.json();
+                const processedText = data.response;
+                
+                document.getElementById('textOutput').textContent = processedText;
+                updateStatus('העיבוד הושלם בהצלחה');
+
+            } catch (error) {
+                console.error('שגיאה בעיבוד:', error);
+                showError(`שגיאה: ${error.message}`);
+                updateStatus('שגיאה בעיבוד');
+            } finally {
+                isProcessing = false;
+                button.classList.remove('processing');
+                button.innerHTML = originalContent;
+            }
+        }
+
+        function updateStatus(message) {
+            document.getElementById('statusText').textContent = message;
+        }
+
+        function showError(message) {
+            const outputDiv = document.getElementById('textOutput');
+            outputDiv.innerHTML = `<div class="error-message">⚠️ ${message}</div>`;
+        }
+
+        function clearAll() {
+            if (confirm('האם אתה בטוח שברצונך לנקות את כל התוכן?')) {
+                document.getElementById('textInput').value = '';
+                document.getElementById('textOutput').textContent = 'התוצאה תוצג כאן לאחר העיבוד...';
+                document.getElementById('customPrompt').value = '';
+                updateStatus('מוכן לעיבוד');
+            }
+        }
+
+        // התאמת גובה אוטומטית לשדה הקלט
+        document.getElementById('textInput').addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 400) + 'px';
+        });
+
+        // קיצורי מקלדת
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'Enter') {
+                processText('punctuation'); // ברירת מחדל - פיסוק
+            }
+        });
+
+        // אתחול
+        document.addEventListener('DOMContentLoaded', function() {
+            updateStatus('מוכן לעיבוד - הכנס טקסט ובחר פעולה');
+        });
+    </script>
+</body>
+</html>
