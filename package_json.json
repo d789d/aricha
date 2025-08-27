@@ -2,7 +2,7 @@
   "name": "hebrew-text-processor",
   "version": "1.0.0",
   "description": "מעבד טקסטים עבריים עם Claude API",
-  "main": "index.js",
+"main": "server.js"
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js"
